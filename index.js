@@ -23,47 +23,55 @@ const collectionOfEmaiAndPass = new mongoose.Schema({
 })
 const saveItems = mongoose.model("Information", collectionOfEmaiAndPass)
 
+app.post('/login', async (req, res) => {
+    const { password, email } = req.body
+    const founded = await saveItems.findOne({ email })
+    if (founded) {
+        return res.render('logout.ejs')
+    }else{
+        return res.render('registration.ejs')
+    }
+})
 app.post('/registration', async (req, res) => {
-
     const { name, email, password } = req.body
+    const founded2 = await saveItems.findOne({ email })
+    if (founded2) {
+        return res.render('login.ejs')
+    }
     const information = await saveItems.create({ name: name, email: email, password: password })
-
     const token = jwt.sign({ _id: information._id }, "bGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJfaWQiOiI2Nj")
-
     res.cookie("token", token, {
         httpOnly: true,
         expires: new Date(Date.now() + 60 * 1000)
     })
     res.redirect('/')
+
 })
 
 app.get('/logout', (req, res) => {
 
     res.cookie("token", null, {
-        httpOnly: true,
+        httpOnly: true, 
         expires: new Date(Date.now())
     })
     res.redirect('/')
 })
-const isAuthenticate = async (req, res, next) => {
-    const { token } = req.cookies
-    if (token) {
-        const decode = jwt.verify(token, "bGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJfaWQiOiI2Nj")
-        req.user = await saveItems.findById(decode._id)
 
-        next()
-    } else {
-        res.render('registration.ejs')
+// const isAuthenticate = async (req, res, next) => {
+//     const { token } = req.cookies
+//     if (token) {
+//         // const decode = jwt.verify(token, "bGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJfaWQiOiI2Nj")
+//         // const founded = await saveItems.findById(decode._id)
+//         next()
+//     }else {
+//         res.render('login.ejs')
 
-    }
-}
+//     }
+// }
 
-app.get('/', isAuthenticate, (req, res) => {
-    res.render('logout.ejs', { Email: req.user.email })
+app.get('/', (req, res) => {
+    res.render('login.ejs')
 })
-// app.get('/login',(req, res) => {
-//     res.render("login.ejs")
-// })
 
 app.listen(port, () => {
     console.log(`Server running at ${port}`)
